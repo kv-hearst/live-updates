@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live update test</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+<style>
+body {
+    font-family: 'Source Sans Pro', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+.main-container {
+    display: flex;
+    justify-content: left;
+    align-items: flex-start;
+    max-height: 600px;
+    background-color: #dfdfdf;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px;
+}
+
+.card-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    background-color: white;
+}
+
+.card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 2px solid #dfdfdf;
+    padding: 20px;
+    margin-bottom: 20px;
+    overflow: hidden; /* This ensures content stays inside */
+}
+
+.timestamp {
+    color: #E1372D;
+    font-size: 13px;
+    padding-bottom: 10px;
+    font-weight: bold;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.card-text {
+    flex: 1;
+    width: 100%;
+    line-height: 1.8;
+}
+
+.hed {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+}
+
+.text {
+    font-size: 16px;
+    margin: 0 0 10px 0;
+}
+
+.reporter {
+    font-size: 14px;
+    color: #555555;
+    margin: 0;
+}
+
+.image {
+    width: 100%;
+    max-width: 300px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+</style>
+</head>
+<body>
+<div class="main-container">
+    <div class="card-container" id="cardContainer">
+    </div>
+</div>
+
+<script>
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/1n4O9rqK2SEWARs5NYMY5p7WYBKpk7U9V5O-deteKt78/export?format=csv&gid=0';
+
+    let allUpdates = [];
+
+    async function fetchData() {
+        try {
+            const response = await fetch(sheetURL);
+            const data = await response.text();
+            processCSV(data);
+            displayUpdates();
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            // Display error message to user
+            d3.select('#cardContainer').html('<p style="color: red; padding: 20px;">Error loading updates. Please try again later.</p>');
+        }
+    }
+
+    function processCSV(data) {
+        const rows = data.split('\n').slice(1).filter(row => row.trim()); 
+        allUpdates = rows.map(row => {
+            // Handle CSV parsing with quoted fields
+            const columns = parseCSVRow(row);
+            return {
+                timestamp: columns[0] || '',
+                hed: columns[1] || '',
+                text: columns[2] || '',
+                reporter: columns[3] || '',
+                image: columns[4] || '',
+                video: columns[5] || '',
+                live: columns[6] || ''
+            };
+        }).filter(update => update.hed || update.text); // Only show updates with content
+    }
+
+    function parseCSVRow(row) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current.trim());
+        return result;
+    }
+
+
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return '';
+
+        const updateTime = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - updateTime;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+
+        if (diffHours < 2) {
+            if (diffMins < 1) {
+                return 'Just now';
+            } else if (diffMins === 1) {
+                return 'a min ago';
+            } else if (diffMins < 60) {
+                return `${diffMins} mins ago`;
+            } else if (diffHours === 1) {
+                return 'an hour ago';
+            } else {
+                return `${diffHours} hours ago`;
+            }
+        }
+
+        const options = {
+            timeZone: 'America/New_York',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        };
+        
+        const edtTime = updateTime.toLocaleString('en-US', options);
+        return `${edtTime} EDT`;
+
+    }
+
+    function convertGoogleDriveURL(url) {
+    if (!url) return '';
+    
+    // Check if it's a Google Drive URL
+    if (url.includes('drive.google.com')) {
+        // Extract file ID from various Google Drive URL formats
+        let fileId = '';
+        
+        if (url.includes('id=')) {
+            // Format: https://drive.google.com/open?id=FILE_ID
+            fileId = url.split('id=')[1].split('&')[0];
+        } else if (url.includes('/d/')) {
+            // Format: https://drive.google.com/file/d/FILE_ID/view
+            fileId = url.split('/d/')[1].split('/')[0];
+        }
+        
+        // Return direct image URL
+        if (fileId) {
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
+        }
+    }
+    
+    return url;
+    }
+
+    function displayUpdates() {
+        const container = d3.select('#cardContainer');
+        container.html(''); // Clear existing content
+
+        if (allUpdates.length === 0) {
+            container.html('<p style="padding: 20px;">No updates available.</p>');
+            return;
+        }
+
+        allUpdates.slice().reverse().forEach(update => {
+            createCard(update);
+        });
+    }
+
+    function createCard(update) {
+        const container = d3.select('#cardContainer');
+        
+        const card = container.append('div')
+            .attr('class', 'card');
+
+        // Timestamp
+        if (update.timestamp) {
+            card.append('div')
+                .attr('class', 'timestamp')
+                .text(formatTimestamp(update.timestamp));
+        }
+
+        // Card content wrapper
+        const cardContent = card.append('div')
+            .attr('class', 'card-content');
+
+        // Text content
+        const cardText = cardContent.append('div')
+            .attr('class', 'card-text');
+        
+        if (update.hed) {
+            cardText.append('h2')
+                .attr('class', 'hed')
+                .text(update.hed);
+        }
+
+        
+        if (update.image) {
+            cardText.append('div')
+                .attr('class', 'image')
+                .append('img')
+                .attr('src', convertGoogleDriveURL(update.image))
+                .attr('alt', 'Update image');
+        }
+    
+
+        if (update.text) {
+            cardText.append('p')
+                .attr('class', 'text')
+                .text(update.text);
+        }
+
+        if (update.reporter) {
+            cardText.append('p')
+                .attr('class', 'reporter')
+                .html(`By ${update.reporter}`);
+        }
+       
+    }
+
+    // Initial fetch
+    fetchData();
+
+    // Auto-refresh every 30 seconds
+    setInterval(fetchData, 30000);
+
+
+
+</script>
+</body>
+</html>
