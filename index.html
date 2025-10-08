@@ -24,10 +24,10 @@ body {
     justify-content: left;
     align-items: flex-start;
     max-height: 600px;
-    background-color: #dfdfdf;
+    border: 3px solid #E1372D;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 10px;
+    /* padding: 5px; */
 }
 
 .card-container {
@@ -42,9 +42,10 @@ body {
     width: 100%;
     display: flex;
     flex-direction: column;
-    border-bottom: 2px solid #dfdfdf;
-    padding: 20px;
-    margin-bottom: 20px;
+    /* border-top: 2px solid #dfdfdf; */
+    padding: 5px;
+    /* box-shadow: 0 4px 4px rgba(0, 0, 0, 0.1); */
+    /* margin-bottom: 20px; */
     overflow: hidden; /* This ensures content stays inside */
 }
 
@@ -62,13 +63,14 @@ body {
 }
 
 .card-text {
+    padding-top: 5px;
     flex: 1;
     width: 100%;
-    line-height: 1.8;
+    line-height: 1.2;
 }
 
 .hed {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: bold;
     margin: 0 0 10px 0;
 }
@@ -79,14 +81,14 @@ body {
 }
 
 .reporter {
-    font-size: 14px;
+    font-size: 12px;
     color: #555555;
     margin: 0;
 }
 
 .image {
     width: 100%;
-    max-width: 300px;
+    max-width: 500px;
     margin: 10px 0;
     overflow: hidden;
 }
@@ -96,9 +98,61 @@ body {
     height: auto;
     display: block;
 }
+
+.ticker{
+    padding-top: 10px;
+}
+.ticker span {
+    display: inline-block;
+    background-color: #E1372D;
+    color: white;
+    font-weight: bold;
+    padding: 10px;
+    font-size: 16px;
+    
+}
+
+@media screen and (max-width: 600px) {
+    .main-container {
+        max-height: 400px;
+    }
+
+    .card {
+        padding: 10px;
+    }
+
+    .hed {
+        font-size: 18px;
+    }
+
+    .text {
+        font-size: 14px;
+    }
+
+    .reporter {
+        font-size: 12px;
+    }
+
+    .image {
+        max-width: 100%;
+
+    }
+    .ticker span {
+        font-size: 12px;
+        padding: 8px;
+    }
+}
 </style>
 </head>
 <body>
+
+<div class="ticker">
+    <span>BREAKING NEWS: LIVE UPDATES</span>
+</div>
+<!-- 
+<div style="height: 10px;"></div>
+<span style="background-color: #E1372D; font-weight: bold; color: white; padding: 10px 10px 0 10px;">BREAKING NEWS: LIVE UPDATES</span> -->
+
 <div class="main-container">
     <div class="card-container" id="cardContainer">
     </div>
@@ -285,6 +339,9 @@ body {
                 .attr('class', 'reporter')
                 .html(`By ${update.reporter}`);
         }
+
+        // Add a line break after each card
+        container.append('hr').style('border', '1px solid #dfdfdf').style('margin', '5px 5px');
        
     }
 
