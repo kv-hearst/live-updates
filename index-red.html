@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live update</title>
+    <title>Breaking News: Live update</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 
@@ -24,7 +24,7 @@ body {
     justify-content: left;
     align-items: flex-start;
     max-height: 600px;
-    border: 3px solid #1C58B8;
+    border: 3px solid #E1372D;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -116,9 +116,10 @@ body {
     padding-top: 10px;
 
 }
+
 .ticker span {
     display: inline-block;
-    background-color: #1C58B8;
+    background-color: #E1372D;
     color: white;
     font-weight: bold;
     padding: 10px;
@@ -178,7 +179,7 @@ body {
 <body>
 
 <div class="ticker">
-    <span>LIVE UPDATES</span>
+    <span>BREAKING NEWS: LIVE UPDATES</span>
 </div>
 
 <div class="main-container">
@@ -187,7 +188,7 @@ body {
 </div>
 
 <script>
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/1n4O9rqK2SEWARs5NYMY5p7WYBKpk7U9V5O-deteKt78/export?format=csv&gid=1139470475';
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/1n4O9rqK2SEWARs5NYMY5p7WYBKpk7U9V5O-deteKt78/export?format=csv&gid=0';
 
     let allUpdates = [];
     let expandedCards = new Set();
@@ -202,6 +203,7 @@ body {
             console.error('Error fetching data:', error);
             d3.select('#cardContainer').html('<p style="color: #222; padding: 20px;">Loading updates...</p>');
         }
+        
     }
 
     function processCSV(data) {
@@ -217,12 +219,11 @@ body {
                 image: columns[4] || '',
                 live: columns[5] || ''
             };
-        })
-        .filter(update => update.hed || update.text)  
+        }).filter(update => update.hed || update.text)
         .filter(update => {
             const liveValue = update.live.toString().trim().toUpperCase();
             return liveValue === 'YES';
-        });
+        }); 
     }
 
     function parseCSVRow(row) {
@@ -306,7 +307,7 @@ body {
 
     function displayUpdates() {
         const container = d3.select('#cardContainer');
-        container.html('');
+        container.html(''); 
 
         if (allUpdates.length === 0) {
             container.html('<p style="padding: 20px;">No updates available.</p>');
@@ -320,9 +321,9 @@ body {
 
     function createCard(update) {
         const container = d3.select('#cardContainer');
-
-        const cardId = `${update.timestamp}-${update.hed}`.replace(/[^a-zA-Z0-9]/g, '-');
         
+        const cardId = `${update.timestamp}-${update.hed}`.replace(/[^a-zA-Z0-9]/g, '-');
+
         const card = container.append('div')
             .attr('class', 'card');
 
@@ -333,10 +334,10 @@ body {
         }
 
         const wasExpanded = expandedCards.has(cardId);
-
+       
         const cardContent = card.append('div')
-            .attr('class', wasExpanded ? 'card-content' : 'card-content collapsed');
-        
+        .attr('class', wasExpanded ? 'card-content' : 'card-content collapsed');
+
         const cardText = cardContent.append('div')
             .attr('class', 'card-text');
         
@@ -369,9 +370,9 @@ body {
         }
 
         container.append('hr').style('border', '1px solid #dfdfdf').style('margin', '5px 5px');
+       
 
-
-        function checkHeightAndAddButton() {
+    function checkHeightAndAddButton() {
             const contentNode = cardContent.node();
             const actualHeight = contentNode.scrollHeight;
             
@@ -409,6 +410,7 @@ body {
     
     fetchData();
 
+    // Auto-refresh every 10 seconds
     setInterval(fetchData, 10000);
 
 

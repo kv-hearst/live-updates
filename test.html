@@ -24,7 +24,7 @@ body {
     justify-content: left;
     align-items: flex-start;
     max-height: 600px;
-    border: 3px solid #E1372D;
+    border: 3px solid #1C58B8;
     overflow-y: auto;
     overflow-x: hidden;
     /* padding: 5px; */
@@ -42,11 +42,10 @@ body {
     width: 100%;
     display: flex;
     flex-direction: column;
-    /* border-top: 2px solid #dfdfdf; */
     padding: 5px;
-    /* box-shadow: 0 4px 4px rgba(0, 0, 0, 0.1); */
-    /* margin-bottom: 20px; */
-    overflow: hidden; /* This ensures content stays inside */
+    overflow: hidden; 
+
+    position: relative;
 }
 
 .timestamp {
@@ -60,7 +59,25 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
+    position: relative;
 }
+
+.card-content.collapsed {
+        max-height: 300px;
+        overflow: hidden;
+    }
+    
+.card-content.collapsed::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+       
+        pointer-events: none;
+    }
+    
 
 .card-text {
     padding-top: 5px;
@@ -101,19 +118,40 @@ body {
 
 .ticker{
     padding-top: 10px;
-    /* position: sticky;
-    top: 0;
-    z-index: 1000; */
+
 }
 .ticker span {
     display: inline-block;
-    background-color: #E1372D;
+    background-color: #1C58B8;
     color: white;
     font-weight: bold;
     padding: 10px;
     font-size: 16px;
     
 }
+
+.show-more-btn {
+        background-color: #E1372D;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-family: 'Source Sans Pro', sans-serif;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-top: 10px;
+        align-self: flex-start;
+        transition: background-color 0.2s;
+    }
+    
+    .show-more-btn:hover {
+        background-color: #c42e24;
+    }
+    
+    .show-more-btn:focus {
+        outline: 2px solid #E1372D;
+        outline-offset: 2px;
+    }
 
 @media screen and (max-width: 600px) {
     .main-container {
@@ -150,7 +188,7 @@ body {
 <body>
 
 <div class="ticker">
-    <span>BREAKING NEWS: LIVE UPDATES</span>
+    <span>LIVE UPDATES</span>
 </div>
 
 <div class="main-container">
@@ -159,9 +197,10 @@ body {
 </div>
 
 <script>
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/1n4O9rqK2SEWARs5NYMY5p7WYBKpk7U9V5O-deteKt78/export?format=csv&gid=0';
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/1n4O9rqK2SEWARs5NYMY5p7WYBKpk7U9V5O-deteKt78/export?format=csv&gid=1139470475';
 
     let allUpdates = [];
+    let expandedCards = new Set();
 
     async function fetchData() {
         try {
@@ -189,7 +228,12 @@ body {
                 image: columns[4] || '',
                 live: columns[5] || ''
             };
-        }).filter(update => update.hed || update.text); // Only show updates with content
+        })
+        .filter(update => update.hed || update.text) // Only show updates with content
+        .filter(update => {
+            const liveValue = update.live.toString().trim().toUpperCase();
+            return liveValue === 'YES' || liveValue === 'Y' || liveValue === 'TRUE';
+        });
     }
 
     function parseCSVRow(row) {
@@ -289,25 +333,27 @@ body {
             createCard(update);
         });
     }
-
+    
     function createCard(update) {
         const container = d3.select('#cardContainer');
         
+        const cardId = `${update.timestamp}-${update.hed}`.replace(/[^a-zA-Z0-9]/g, '-');
+
         const card = container.append('div')
             .attr('class', 'card');
-
-        // Timestamp
+        
         if (update.timestamp) {
             card.append('div')
                 .attr('class', 'timestamp')
                 .text(formatTimestamp(update.timestamp));
         }
 
-        // Card content wrapper
+        const wasExpanded = expandedCards.has(cardId);
+        // console.log('Card ID:', cardId, '| Was expanded:', wasExpanded);
+        
         const cardContent = card.append('div')
-            .attr('class', 'card-content');
-
-        // Text content
+            .attr('class', wasExpanded ? 'card-content' : 'card-content collapsed');
+       
         const cardText = cardContent.append('div')
             .attr('class', 'card-text');
         
@@ -316,35 +362,70 @@ body {
                 .attr('class', 'hed')
                 .text(update.hed);
         }
-
         
+        let imageElement = null;
         if (update.image) {
-            cardText.append('div')
+            imageElement = cardText.append('div')
                 .attr('class', 'image')
                 .append('img')
                 .attr('src', convertGoogleDriveURL(update.image))
-                .attr('alt', 'Update image');
+                .attr('alt', 'Update image')
+                .node();
         }
-    
 
         if (update.text) {
             cardText.append('p')
                 .attr('class', 'text')
                 .text(update.text);
         }
-
+        
         if (update.reporter) {
             cardText.append('p')
                 .attr('class', 'reporter')
                 .html(`By ${update.reporter}`);
         }
-
-        // Add a line break after each card
-        container.append('hr').style('border', '1px solid #dfdfdf').style('margin', '5px 5px');
-       
+        
+        function checkHeightAndAddButton() {
+            const contentNode = cardContent.node();
+            const actualHeight = contentNode.scrollHeight;
+            
+            console.log('Card height:', actualHeight); // Debug log
+            
+            if (actualHeight > 300) {
+                console.log('Adding show more button'); // Debug log
+                const showMoreBtn = card.append('button')
+                    .attr('class', 'show-more-btn')
+                    .text(wasExpanded ? 'Show less' : 'Show more')
+                    .on('click', function() {
+                        const isCollapsed = cardContent.classed('collapsed');
+                        cardContent.classed('collapsed', !isCollapsed);
+                        d3.select(this).text(isCollapsed ? 'Show less' : 'Show more');
+                        
+                        // Update the expanded state tracking
+                        if (isCollapsed) {
+                            expandedCards.add(cardId);
+                        } else {
+                            expandedCards.delete(cardId);
+                        }
+                    });
+            } else {
+                console.log('Content too short, no button needed'); // Debug log
+                // Remove collapsed class if content is short
+                cardContent.classed('collapsed', false);
+            }
+        }
+        
+        // If there's an image, wait for it to load before checking height
+        if (imageElement) {
+            imageElement.onload = checkHeightAndAddButton;
+            // Fallback timeout in case image fails to load
+            imageElement.onerror = checkHeightAndAddButton;
+        } else {
+            // No image, check immediately
+            setTimeout(checkHeightAndAddButton, 100);
+        }
     }
-
-    // Initial fetch
+    
     fetchData();
 
     // Auto-refresh every 10 seconds
