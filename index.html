@@ -101,6 +101,9 @@ body {
 
 .ticker{
     padding-top: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 .ticker span {
     display: inline-block;
@@ -187,8 +190,7 @@ body {
                 text: columns[2] || '',
                 reporter: columns[3] || '',
                 image: columns[4] || '',
-                video: columns[5] || '',
-                live: columns[6] || ''
+                live: columns[5] || ''
             };
         }).filter(update => update.hed || update.text); // Only show updates with content
     }
