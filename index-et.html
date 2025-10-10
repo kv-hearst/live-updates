@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live update test</title>
+    <title>Live update</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 
@@ -24,10 +24,10 @@ body {
     justify-content: left;
     align-items: flex-start;
     max-height: 600px;
-    border: 3px solid #1C58B8;
+    border: 3px solid #0000EE;
+     /* border: 3px solid #C70000; */
     overflow-y: auto;
     overflow-x: hidden;
-    /* padding: 5px; */
 }
 
 .card-container {
@@ -44,12 +44,11 @@ body {
     flex-direction: column;
     padding: 5px;
     overflow: hidden; 
-
     position: relative;
 }
 
 .timestamp {
-    color: #E1372D;
+    color: #C70000;
     font-size: 13px;
     padding-bottom: 10px;
     font-weight: bold;
@@ -74,10 +73,8 @@ body {
         left: 0;
         right: 0;
         height: 80px;
-       
         pointer-events: none;
     }
-    
 
 .card-text {
     padding-top: 5px;
@@ -117,12 +114,14 @@ body {
 }
 
 .ticker{
-    padding-top: 10px;
-
+    /* padding-top: 10px; */
+    position: sticky;
+    z-index: 1;
 }
 .ticker span {
     display: inline-block;
-    background-color: #1C58B8;
+    background-color:#0000EE;
+    /* background-color: #C70000; */
     color: white;
     font-weight: bold;
     padding: 10px;
@@ -131,27 +130,21 @@ body {
 }
 
 .show-more-btn {
-        background-color: #E1372D;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        font-size: 14px;
-        font-family: 'Source Sans Pro', sans-serif;
-        cursor: pointer;
-        border-radius: 4px;
-        margin-top: 10px;
-        align-self: flex-start;
-        transition: background-color 0.2s;
-    }
-    
-    .show-more-btn:hover {
-        background-color: #c42e24;
-    }
-    
-    .show-more-btn:focus {
-        outline: 2px solid #E1372D;
-        outline-offset: 2px;
-    }
+    background-color: whitesmoke;
+    color: #222;
+    border: none;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 4px;
+    align-self: flex-start;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 5px;
+
+}
+.show-more-btn:hover {
+    background-color: #ddd;
+}
 
 @media screen and (max-width: 600px) {
     .main-container {
@@ -188,7 +181,7 @@ body {
 <body>
 
 <div class="ticker">
-    <span>LIVE UPDATES</span>
+    <span>Live Updates</span>
 </div>
 
 <div class="main-container">
@@ -197,7 +190,8 @@ body {
 </div>
 
 <script>
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/1n4O9rqK2SEWARs5NYMY5p7WYBKpk7U9V5O-deteKt78/export?format=csv&gid=1139470475';
+    // Add google sheet URL here /export?format=csv&gid=
+    const sheetURL = '';
 
     let allUpdates = [];
     let expandedCards = new Set();
@@ -210,8 +204,7 @@ body {
             displayUpdates();
         } catch (error) {
             console.error('Error fetching data:', error);
-            // Display error message to user
-            d3.select('#cardContainer').html('<p style="color: red; padding: 20px;">Error loading updates. Please try again later.</p>');
+            d3.select('#cardContainer').html('<p style="color: #222; padding: 20px;">Loading updates...</p>');
         }
     }
 
@@ -229,10 +222,10 @@ body {
                 live: columns[5] || ''
             };
         })
-        .filter(update => update.hed || update.text) // Only show updates with content
+        .filter(update => update.hed || update.text)  
         .filter(update => {
             const liveValue = update.live.toString().trim().toUpperCase();
-            return liveValue === 'YES' || liveValue === 'Y' || liveValue === 'TRUE';
+            return liveValue === 'TRUE';
         });
     }
 
@@ -291,27 +284,22 @@ body {
         };
         
         const edtTime = updateTime.toLocaleString('en-US', options);
-        return `${edtTime} EDT`;
+        return `${edtTime} ET`;
 
     }
 
     function convertGoogleDriveURL(url) {
     if (!url) return '';
     
-    // Check if it's a Google Drive URL
     if (url.includes('drive.google.com')) {
-        // Extract file ID from various Google Drive URL formats
         let fileId = '';
         
         if (url.includes('id=')) {
-            // Format: https://drive.google.com/open?id=FILE_ID
             fileId = url.split('id=')[1].split('&')[0];
         } else if (url.includes('/d/')) {
-            // Format: https://drive.google.com/file/d/FILE_ID/view
             fileId = url.split('/d/')[1].split('/')[0];
         }
         
-        // Return direct image URL
         if (fileId) {
             return `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
         }
@@ -322,7 +310,7 @@ body {
 
     function displayUpdates() {
         const container = d3.select('#cardContainer');
-        container.html(''); // Clear existing content
+        container.html('');
 
         if (allUpdates.length === 0) {
             container.html('<p style="padding: 20px;">No updates available.</p>');
@@ -333,15 +321,15 @@ body {
             createCard(update);
         });
     }
-    
+
     function createCard(update) {
         const container = d3.select('#cardContainer');
-        
-        const cardId = `${update.timestamp}-${update.hed}`.replace(/[^a-zA-Z0-9]/g, '-');
 
+        const cardId = `${update.timestamp}-${update.hed}`.replace(/[^a-zA-Z0-9]/g, '-');
+        
         const card = container.append('div')
             .attr('class', 'card');
-        
+
         if (update.timestamp) {
             card.append('div')
                 .attr('class', 'timestamp')
@@ -349,11 +337,10 @@ body {
         }
 
         const wasExpanded = expandedCards.has(cardId);
-        // console.log('Card ID:', cardId, '| Was expanded:', wasExpanded);
-        
+
         const cardContent = card.append('div')
             .attr('class', wasExpanded ? 'card-content' : 'card-content collapsed');
-       
+        
         const cardText = cardContent.append('div')
             .attr('class', 'card-text');
         
@@ -362,7 +349,13 @@ body {
                 .attr('class', 'hed')
                 .text(update.hed);
         }
-        
+
+        if (update.text) {
+            cardText.append('p')
+                .attr('class', 'text')
+                .text(update.text);
+        }
+
         let imageElement = null;
         if (update.image) {
             imageElement = cardText.append('div')
@@ -373,18 +366,15 @@ body {
                 .node();
         }
 
-        if (update.text) {
-            cardText.append('p')
-                .attr('class', 'text')
-                .text(update.text);
-        }
-        
         if (update.reporter) {
             cardText.append('p')
                 .attr('class', 'reporter')
                 .html(`By ${update.reporter}`);
         }
-        
+
+        container.append('hr').style('border', '1px solid #dfdfdf').style('margin', '5px 5px');
+
+
         function checkHeightAndAddButton() {
             const contentNode = cardContent.node();
             const actualHeight = contentNode.scrollHeight;
@@ -401,7 +391,6 @@ body {
                         cardContent.classed('collapsed', !isCollapsed);
                         d3.select(this).text(isCollapsed ? 'Show less' : 'Show more');
                         
-                        // Update the expanded state tracking
                         if (isCollapsed) {
                             expandedCards.add(cardId);
                         } else {
@@ -409,26 +398,21 @@ body {
                         }
                     });
             } else {
-                console.log('Content too short, no button needed'); // Debug log
-                // Remove collapsed class if content is short
+                // console.log('Content too short, no button needed'); 
                 cardContent.classed('collapsed', false);
             }
         }
         
-        // If there's an image, wait for it to load before checking height
         if (imageElement) {
             imageElement.onload = checkHeightAndAddButton;
-            // Fallback timeout in case image fails to load
             imageElement.onerror = checkHeightAndAddButton;
         } else {
-            // No image, check immediately
             setTimeout(checkHeightAndAddButton, 100);
         }
     }
     
     fetchData();
 
-    // Auto-refresh every 10 seconds
     setInterval(fetchData, 10000);
 
 

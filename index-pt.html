@@ -25,6 +25,7 @@ body {
     align-items: flex-start;
     max-height: 600px;
     border: 3px solid #0000EE;
+    /* border: 3px solid #C70000; */
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -120,6 +121,7 @@ body {
 .ticker span {
     display: inline-block;
     background-color:#0000EE;
+    /* background-color:#C70000; */
     color: white;
     font-weight: bold;
     padding: 10px;
@@ -188,7 +190,8 @@ body {
 </div>
 
 <script>
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/14KjlGLM6yAhzuDbOalqi6obBKG4Ms9DK4CP4mzyd1A4/export?format=csv&gid=0';
+    // Add google sheet URL here /export?format=csv&gid=
+    const sheetURL ='';
 
     let allUpdates = [];
     let expandedCards = new Set();
@@ -271,7 +274,7 @@ body {
         }
 
         const options = {
-            timeZone: 'America/New_York',
+            timeZone: 'America/Los_Angeles',
             month: 'short',
             day: 'numeric',
             year: 'numeric',
@@ -279,9 +282,8 @@ body {
             minute: '2-digit',
             hour12: true
         };
-        
         const edtTime = updateTime.toLocaleString('en-US', options);
-        return `${edtTime} EDT`;
+        return `${edtTime} PT`;
 
     }
 
@@ -395,7 +397,7 @@ body {
                         }
                     });
             } else {
-                console.log('Content too short, no button needed'); 
+                // console.log('Content too short, no button needed'); 
                 cardContent.classed('collapsed', false);
             }
         }

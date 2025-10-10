@@ -24,7 +24,7 @@ body {
     justify-content: left;
     align-items: flex-start;
     max-height: 600px;
-    border: 3px solid #E1372D;
+    border: 3px solid #C70000;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -47,7 +47,7 @@ body {
 }
 
 .timestamp {
-    color: #E1372D;
+    color: #C70000;
     font-size: 13px;
     padding-bottom: 10px;
     font-weight: bold;
@@ -113,13 +113,15 @@ body {
 }
 
 .ticker{
-    padding-top: 10px;
+    /* padding-top: 10px; */
+    position: sticky;
+    z-index: 1;
 
 }
 
 .ticker span {
     display: inline-block;
-    background-color: #E1372D;
+    background-color: #C70000;
     color: white;
     font-weight: bold;
     padding: 10px;
@@ -179,7 +181,7 @@ body {
 <body>
 
 <div class="ticker">
-    <span>BREAKING NEWS: LIVE UPDATES</span>
+    <span>Breaking News: Live Updates</span>
 </div>
 
 <div class="main-container">
@@ -222,7 +224,7 @@ body {
         }).filter(update => update.hed || update.text)
         .filter(update => {
             const liveValue = update.live.toString().trim().toUpperCase();
-            return liveValue === 'YES';
+            return liveValue === 'TRUE';
         }); 
     }
 
@@ -347,6 +349,12 @@ body {
                 .text(update.hed);
         }
 
+        if (update.text) {
+            cardText.append('p')
+                .attr('class', 'text')
+                .text(update.text);
+        }
+
         let imageElement = null;
         if (update.image) {
             imageElement = cardText.append('div')
@@ -355,12 +363,6 @@ body {
                 .attr('src', convertGoogleDriveURL(update.image))
                 .attr('alt', 'Update image')
                 .node();
-        }
-
-        if (update.text) {
-            cardText.append('p')
-                .attr('class', 'text')
-                .text(update.text);
         }
 
         if (update.reporter) {
